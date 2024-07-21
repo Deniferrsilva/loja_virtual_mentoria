@@ -28,7 +28,7 @@ CREATE DATABASE loja_virtual_mentoria WITH TEMPLATE = template0 ENCODING = 'UTF8
 
 ALTER DATABASE loja_virtual_mentoria OWNER TO postgres;
 
-\connect loja_virtual_mentoria
+--\connect loja_virtual_mentoria
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
