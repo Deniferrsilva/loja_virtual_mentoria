@@ -1,81 +1,65 @@
 package jdev.mentoria.lojavirtual.security;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import static org.springframework.security.config.Customizer.withDefaults;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
-//@Configuration
-//@EnableWebSecurity
-//@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-//public class WebConfigSecurity extends WebSecurityConfigurerAdapter implements HttpSessionListener {
-	
-	
-//	@Override
-//	public void configure(WebSecurity web) throws Exception {
-//		web.ignoring().antMatchers(HttpMethod.GET, "/salvarAcesso", "/deleteAcesso")
-//		.antMatchers(HttpMethod.POST, "/salvarAcesso", "/deleteAcesso");
-//		/*Ingnorando URL no momento para nao autenticar*/
-//	}
-
-//}
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.firewall.HttpFirewall;
-import org.springframework.security.web.firewall.StrictHttpFirewall;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-
-import static org.springframework.security.config.Customizer.withDefaults;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.firewall.HttpFirewall;
-import org.springframework.security.web.firewall.StrictHttpFirewall;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-
-import static org.springframework.security.config.Customizer.withDefaults;
+import jdev.mentoria.lojavirtual.service.ImplementacaoUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class WebConfigSecurity {
 
+    private final ImplementacaoUserDetailsService implementacaoUserDetailsService;
+
+    public WebConfigSecurity(ImplementacaoUserDetailsService implementacaoUserDetailsService) {
+        this.implementacaoUserDetailsService = implementacaoUserDetailsService;
+    }
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests((authz) -> authz
-                .requestMatchers("/salvarAcesso/**","/deleteAcesso/**").permitAll()
-                .anyRequest().authenticated()
+            .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                .requestMatchers(HttpMethod.GET, "/salvarAcesso", "/deleteAcesso").permitAll() // URLs que não precisam de autenticação
+                .requestMatchers(HttpMethod.POST, "/salvarAcesso", "/deleteAcesso").permitAll() // URLs que não precisam de autenticação
+                .anyRequest().authenticated() // Qualquer outra requisição precisa de autenticação
             )
-            .httpBasic(withDefaults());
+            .formLogin(formLogin -> formLogin
+                .loginPage("/login").permitAll() // Página de login personalizada
+            )
+            .logout(logout -> logout
+                .permitAll() // Permitir logout
+            );
+
         return http.build();
     }
 
     @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        
-    	//return (web) -> web.ignoring().requestMatchers("/resources/**");// Ignorar segurança para recursos estáticos, como imagens, CSS, etc.
-               
-    	return (web) -> web.ignoring().requestMatchers("/salvarAcesso/**","/deleteAcesso/**");
+    public UserDetailsService userDetailsService() {
+        return implementacaoUserDetailsService;
     }
-
+    
+    
     @Bean
-    public HttpFirewall httpFirewall() {
-        StrictHttpFirewall firewall = new StrictHttpFirewall();
-        firewall.setAllowSemicolon(true);
-        return firewall;
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(implementacaoUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 }
