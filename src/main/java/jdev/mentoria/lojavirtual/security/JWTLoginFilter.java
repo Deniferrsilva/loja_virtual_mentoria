@@ -1,9 +1,11 @@
 package jdev.mentoria.lojavirtual.security;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -79,5 +81,31 @@ public class JWTLoginFilter extends UsernamePasswordAuthenticationFilter {
 			e.printStackTrace();
 		}
 	}
+	
+
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+                                              AuthenticationException failed) throws IOException, ServletException {
+        // Verificar o tipo de exceção para determinar o código de status apropriado
+        if (failed instanceof BadCredentialsException) {
+            // Falha de autorização (403 Forbidden)
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().write("Usuario e senha nao encontrado: " + failed.getMessage());
+        } else {
+            // Falha de autenticação (401 Unauthorized)
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Authentication failed: " + failed.getMessage());
+        }
+
+        // Logar a falha de autenticação/autorização
+        System.out.println("Unsuccessful authentication/authorization attempt: " + failed.getMessage());
+
+        // Também é possível adicionar cabeçalhos ou realizar outras ações, conforme necessário
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        // Chamar o método da superclasse para finalizar o processamento
+    //   super.unsuccessfulAuthentication(request, response, failed);
+    }
 
 }

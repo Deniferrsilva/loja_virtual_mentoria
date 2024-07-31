@@ -1,5 +1,6 @@
 package jdev.mentoria.lojavirtual.security;
 
+import java.io.IOException;
 import java.security.Key;
 import java.util.Date;
 import java.util.Base64;
@@ -10,9 +11,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -63,12 +66,14 @@ public class JWTTokenAutenticacaoService {
 	}
 
 	/* Retorna o usuário validado com token ou caso não seja válido retorna null */
-	public Authentication getAuthetication(HttpServletRequest request, HttpServletResponse response) {
+	public Authentication getAuthetication(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		String token = request.getHeader(HEADER_STRING);
 		logger.info("Token recebido: {}", token);
 		System.out.println("Token recebido: " + token);
 
+		try {
+		
 		if (token != null) {
 
 			String tokenLimpo = token.replace(TOKEN_PREFIX, "").trim();
@@ -91,8 +96,25 @@ public class JWTTokenAutenticacaoService {
 				}
 			}
 		}
+		
+		} catch (SignatureException e) {
+			// Tratamento específico para SignatureException
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+				response.getWriter().write("Invalid token signature: " + e.getMessage());
+	            response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+	            response.getWriter().flush();
+	            response.getWriter().close();
+        } catch (ExpiredJwtException e) {
+        	   response.getWriter().write("Token Esta expirado: " + e.getMessage());
+           
+        
+		}finally {
+			liberacaoCors(response);
+		}
 
-		liberacaoCors(response);
+		
 		return null;
 	}
 
