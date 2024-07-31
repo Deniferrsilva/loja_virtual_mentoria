@@ -1061,3 +1061,4 @@ ALTER TABLE ONLY public.item_venda_loja
 --
 -- PostgreSQL database dump complete
 --
+

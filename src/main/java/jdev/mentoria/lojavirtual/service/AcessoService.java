@@ -13,7 +13,12 @@ public class AcessoService {
 	
 	/*Qualuer tipo de validacao aintes de  salvar*/
 	public Acesso  save(Acesso acesso) {
+	
+	    if (acesso.getDescricao() == null) {
+	        throw new IllegalArgumentException("Descrição não pode ser nula");
+	    }
+	    	return acessoRepository.save(acesso);
+		}
 		
-		return acessoRepository.save(acesso);
 	}
-}
+

@@ -3,7 +3,11 @@ package jdev.mentoria.lojavirtual.model;
 
 import java.util.Objects;
 
+import org.antlr.v4.runtime.misc.NotNull;
 import org.springframework.security.core.GrantedAuthority;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,14 +24,19 @@ public class Acesso implements GrantedAuthority{
 
 
 	private static final long serialVersionUID = 1L;
+	
+	
+
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_acesso")
 	private Long id;
 
+
 	@Column(nullable = false)
 	private String descricao; /* Acesso ex: ROLE_ADMIN ou ROLE_SECRETARIO*/ 
 
+	@JsonIgnore
 	@Override
 	public String getAuthority() {
 		// TODO Auto-generated method stub
