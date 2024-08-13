@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.websocket.server.PathParam;
+import jdev.mentoria.lojavirtual.ExceptionMentoriaJava;
 import jdev.mentoria.lojavirtual.model.Acesso;
 import jdev.mentoria.lojavirtual.repository.AcessoRepository;
 import jdev.mentoria.lojavirtual.service.AcessoService;
@@ -32,7 +33,16 @@ public class AcessoController {
 	
 	@ResponseBody /*pode dar retorno da api*/
 	@PostMapping(value = "/salvarAcesso")/*Mapeando a url para receber JSON*/
-	public ResponseEntity<Acesso> salvarAcesso(@RequestBody Acesso acesso) { /*recebe json e converte para objeto*/
+	public ResponseEntity<Acesso> salvarAcesso(@RequestBody Acesso acesso) throws ExceptionMentoriaJava { /*recebe json e converte para objeto*/
+		
+		if (acesso.getId() == null) {
+			
+			List<Acesso> acessos = acessoRepository.buscarAcessoDesc(acesso.getDescricao().toUpperCase());
+			
+			if(!acessos.isEmpty()) {
+				throw new ExceptionMentoriaJava("Ja Existe Acesso com a descricao "+ acesso.getDescricao());
+			}
+		}
 		
 		Acesso acessoSalvo = acessoService.save(acesso);
 		
@@ -59,9 +69,13 @@ public class AcessoController {
 	
 	@ResponseBody 
 	@GetMapping(value = "/obterAcesso/{id}")/*Mapeando a url para receber JSON*/
-	public ResponseEntity<Acesso> obterAcesso(@PathVariable("id") Long id) { /*recebe json e converte para objeto*/
+	public ResponseEntity<Acesso> obterAcesso(@PathVariable("id") Long id) throws ExceptionMentoriaJava { /*recebe json e converte para objeto*/
 		
-	 Acesso acesso = acessoRepository.findById(id).get();
+	 Acesso acesso = acessoRepository.findById(id).orElse(null);
+	 
+	 if (acesso == null) {
+		 throw new ExceptionMentoriaJava("Nao encontrou acesso com codigo "+ id);
+	 }
 		
 		return new ResponseEntity<Acesso>(acesso,HttpStatus.OK);
 	}
@@ -70,7 +84,7 @@ public class AcessoController {
 	@GetMapping(value = "/buscarPorDesc/{desc}")/*Mapeando a url para receber JSON*/
 	public ResponseEntity<List<Acesso>> buscarPorDesc(@PathVariable("desc") String desc) { /*recebe json e converte para objeto*/
 		
-	 List<Acesso> acesso = acessoRepository.buscarAcessoDesc(desc);
+	 List<Acesso> acesso = acessoRepository.buscarAcessoDesc(desc.toUpperCase());
 		
 		return new ResponseEntity<List<Acesso>>(acesso,HttpStatus.OK);
 	}

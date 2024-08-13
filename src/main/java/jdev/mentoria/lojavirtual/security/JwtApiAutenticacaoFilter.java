@@ -32,6 +32,7 @@ public class JwtApiAutenticacaoFilter extends GenericFilterBean {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
 
+		try {
 		/* Estabele a autenticao do user */
 		System.out.println("Passei por aqui " + request.toString());
 		Authentication authentication = new JWTTokenAutenticacaoService().getAuthetication((HttpServletRequest) request,
@@ -41,6 +42,11 @@ public class JwtApiAutenticacaoFilter extends GenericFilterBean {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		chain.doFilter(request, response);
+		}catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			response.getWriter().write("Ocorreu um erro no sistema, avise o administrador \n"+ e.getMessage());
+		}
 
 	}
 
